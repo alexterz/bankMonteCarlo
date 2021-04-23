@@ -24,8 +24,11 @@ bankSimulation n = do
 
                -- results for b query 
                (waitingTimeListRed, departureTimeListRed) = waitingAndDepartureLists  arrivals redProcessingTimes 0
-               queueList = findQueue  arrivals departureTimeListRed departureTimeListRed 
+{-               queueList = findQueue  arrivals departureTimeListRed departureTimeListRed 
                (maxQueue, avgQueue) = resultWaitingTimes $ queueList
+-}
+               queueList' = findQueue' arrivals departureTimeListRed [] 
+               (maxQueue', avgQueue') = resultWaitingTimes $ queueList'
 
                -- results for c query               
                (maxRed, avgRed) = resultWaitingTimes $ waitingTimeListRed
@@ -38,7 +41,8 @@ bankSimulation n = do
                diffs = [(redDiff, "Red"), (blueDiff, "Blue")]
                (closestValue, best) = foldl (\(diff1,str1 ) (diff2,str2) -> if diff1<diff2 then (diff1,str1) else (diff2,str2)) (yellowDiff,"Yellow") diffs
             printf "Answer to a: \nmax: %g, avg: %g\n"  max avg
-            printf "Answer to b: \nmaxQueue: %g, avgQueue: %g\n"  maxQueue avgQueue
+            --printf "Answer to b: \nmaxQueue: %g, avgQueue: %g\n"  maxQueue avgQueue
+            printf "Efficient Answer' to b: \nmaxQueue': %g, avgQueue': %g\n"  maxQueue' avgQueue'
             printf "Answer to c: \nclosest is: %s, with diff: %g\n"  best closestValue
 
 
@@ -127,9 +131,17 @@ findLasts 0 = []
 findLasts acc = acc : (findLasts $ acc-1) 
 
 
-
+{- n^2 complexity
 findQueue:: [Double] -> [Double] -> [Double] -> [Double]
 findQueue [] _ _ = []
 findQueue (a:arrivals) (d:departureTimes) departures =  
     (fromIntegral (length (filter (\x -> x < d && x > a ) departures))) : findQueue arrivals departureTimes departures 
+-}
 
+-- Efficient: ~ n complexity
+findQueue':: [Double] -> [Double] -> [Double] -> [Double]
+findQueue' [] _ _ = []
+findQueue' (a:arrivals) (d:departureTimes) possibleQueue =  
+    (fromIntegral (length customersInFrontOfMe)) : findQueue' arrivals departureTimes (d:customersInFrontOfMe)
+    where    
+        customersInFrontOfMe = (filter (\x -> x > a ) possibleQueue)
